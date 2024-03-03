@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::create_actions;
 use crate::ActionId;
-use crate::ItemData;
+use crate::EntityData;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum RoomId {
@@ -13,32 +13,46 @@ pub enum RoomId {
 }
 
 struct StudioPlan {
-    hall: ItemData,
-    control_room: ItemData,
-    tone_room: ItemData,
-    vocal_booth: ItemData,
+    hall: EntityData,
+    control_room: EntityData,
+    tone_room: EntityData,
+    vocal_booth: EntityData,
 }
 
 fn get_studio_plan() -> StudioPlan {
-    let hall: ItemData = ItemData {
+    let hall: EntityData = EntityData {
         title: "Hall".to_owned(),
-        allowed_actions: create_actions(vec![ActionId::GoToControlRoom]),
+        allowed_actions: create_actions(vec![
+            ActionId::GoToControlRoom,
+            ActionId::SingToTheCureAndCry,
+            ActionId::PressRandomNumbersOnAnIntercom,
+            ActionId::StaringAtTheDoorForLoongTime,
+            ActionId::PickBottle,
+        ]),
     };
-    let control_room: ItemData = ItemData {
+    let control_room: EntityData = EntityData {
         title: "Control room".to_owned(),
         allowed_actions: create_actions(vec![
             ActionId::GoToHall,
             ActionId::GoToToneRoom,
-            ActionId::GoToVocalBooth,
             ActionId::PickConsole,
             ActionId::PickImac,
+            ActionId::SingToTheCureAndCry,
+            ActionId::PickChair,
         ]),
     };
-    let tone_room: ItemData = ItemData {
+    let tone_room: EntityData = EntityData {
         title: "Tone room".to_owned(),
-        allowed_actions: create_actions(vec![ActionId::GoToControlRoom, ActionId::GoToVocalBooth]),
+        allowed_actions: create_actions(vec![
+            ActionId::GoToControlRoom,
+            ActionId::GoToVocalBooth,
+            ActionId::SingToTheCureAndCry,
+            ActionId::PickMic,
+            ActionId::PickDrums,
+            ActionId::PickGuitarAmp,
+        ]),
     };
-    let vocal_booth: ItemData = ItemData {
+    let vocal_booth: EntityData = EntityData {
         title: "Vocal booth".to_owned(),
         allowed_actions: create_actions(vec![ActionId::GoToControlRoom]),
     };
@@ -53,13 +67,13 @@ fn get_studio_plan() -> StudioPlan {
     studio_plan
 }
 
-pub fn get_studio() -> HashMap<RoomId, ItemData> {
+pub fn get_studio() -> HashMap<RoomId, EntityData> {
     let studio_plan = get_studio_plan();
-    let mut current_room_to_room_data: HashMap<RoomId, ItemData> = HashMap::new();
-    current_room_to_room_data.insert(RoomId::ControlRoom, studio_plan.control_room);
-    current_room_to_room_data.insert(RoomId::Hall, studio_plan.hall);
-    current_room_to_room_data.insert(RoomId::ToneRoom, studio_plan.tone_room);
-    current_room_to_room_data.insert(RoomId::VoiceBooth, studio_plan.vocal_booth);
+    let mut studio_rooms_map: HashMap<RoomId, EntityData> = HashMap::new();
+    studio_rooms_map.insert(RoomId::ControlRoom, studio_plan.control_room);
+    studio_rooms_map.insert(RoomId::Hall, studio_plan.hall);
+    studio_rooms_map.insert(RoomId::ToneRoom, studio_plan.tone_room);
+    studio_rooms_map.insert(RoomId::VoiceBooth, studio_plan.vocal_booth);
 
-    current_room_to_room_data
+    studio_rooms_map
 }

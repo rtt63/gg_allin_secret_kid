@@ -1,44 +1,19 @@
 use std::collections::HashMap;
 
-use dispatcher::call_action;
+use dispatcher::{call_action, ActionId};
 mod dispatcher;
 mod items;
 mod rooms;
 
-use items::{get_items, Item};
+use items::{get_items, ItemId};
 use rooms::{get_studio, RoomId};
 
 fn greeting() {
     println!("It’s 2024, and you found an app that questions you about your genealogical tree and says it 99% chance you’re the secret child of GG Allin. Now you are ready to become a punk rock star (what else could you do in this situation, right?).\n\nYou found a used Squier Bullet and asked some lads next to the pub if they are ready to be in a band. You don’t remember what happened next, but now you’re going to the musical studio to record your first LP!\n\nDon’t screw it up!");
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-enum ActionId {
-    GoToControlRoom,
-    GoToHall,
-    GoToToneRoom,
-    GoToVocalBooth,
-
-    SpillBeerOnTheConsole,
-
-    PickConsole,
-    PushRandomButton,
-    MakeAllFadersUp,
-    StaringAtTheDeskWithTheDumbFace,
-
-    PickImac,
-    TurnOffImac,
-    BreakScreenOfImac,
-    CloseOpenedProToolsSession,
-    TouchImacDisplayWithFinger,
-
-    DropItem,
-
-    ExitGame,
-}
-
 #[derive(Debug, PartialEq, Eq, Hash)]
-struct ItemData {
+struct EntityData {
     title: String,
     allowed_actions: Vec<ActionId>,
 }
@@ -69,6 +44,34 @@ fn clear_console() -> () {
 
     ()
 }
+
+fn handle_current_entity(
+    entity: &EntityData,
+    score: &mut i8,
+    current_room: &mut RoomId,
+    current_item: &mut ItemId,
+) {
+    let mut index_to_action_id: HashMap<usize, &ActionId> = HashMap::new();
+
+    println!("Availabe actions in {}:\n", entity.title);
+
+    for (i, action_id) in entity.allowed_actions.iter().enumerate() {
+        index_to_action_id.insert(i, &action_id);
+        println!("{} -> {:?}", i, &action_id);
+    }
+
+    match handle_user_input() {
+        Ok(user_input) => {
+            let user_choice = index_to_action_id.get(&user_input);
+            match user_choice {
+                Some(choice) => call_action(choice, current_room, score, current_item),
+                _ => {}
+            }
+        }
+        _ => {}
+    }
+}
+
 fn main() {
     clear_console();
     let mut score: i8 = 0;
@@ -77,7 +80,7 @@ fn main() {
     let mut current_room: RoomId = RoomId::Hall;
 
     let items = get_items();
-    let mut current_item: Item = Item::NoItem;
+    let mut current_item: ItemId = ItemId::NoItem;
 
     greeting();
 
@@ -85,49 +88,17 @@ fn main() {
         let current_room_data = studio.get(&current_room);
         let current_item_data = items.get(&current_item);
 
-        let mut index_to_action_id: HashMap<usize, &ActionId> = HashMap::new();
-
-        if current_item != Item::NoItem {
-            match current_item_data {
+        if current_item == ItemId::NoItem {
+            match current_room_data {
                 Some(data) => {
-                    println!("Availabe actions with {}:\n", data.title);
-                    for (i, action_id) in data.allowed_actions.iter().enumerate() {
-                        index_to_action_id.insert(i, &action_id);
-                        println!("{} -> {:?}", i, &action_id);
-                    }
-                    match handle_user_input() {
-                        Ok(user_input) => {
-                            call_action(
-                                index_to_action_id.get(&user_input).unwrap(),
-                                &mut current_room,
-                                &mut score,
-                                &mut current_item,
-                            );
-                        }
-                        _ => {}
-                    }
+                    handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
                 }
                 None => {}
             }
         } else {
-            match current_room_data {
+            match current_item_data {
                 Some(data) => {
-                    println!("Availabe actions in {}:\n", data.title);
-                    for (i, action_id) in data.allowed_actions.iter().enumerate() {
-                        index_to_action_id.insert(i, &action_id);
-                        println!("{} -> {:?}", i, &action_id);
-                    }
-                    match handle_user_input() {
-                        Ok(user_input) => {
-                            call_action(
-                                index_to_action_id.get(&user_input).unwrap(),
-                                &mut current_room,
-                                &mut score,
-                                &mut current_item,
-                            );
-                        }
-                        _ => {}
-                    }
+                    handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
                 }
                 None => {}
             }
