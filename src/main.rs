@@ -37,12 +37,10 @@ fn create_actions(action_ids: Vec<ActionId>) -> Vec<ActionId> {
     upd_vec
 }
 
-fn clear_console() -> () {
+fn clear_console() {
     std::process::Command::new("clear")
         .status()
         .expect("Unable to clear console");
-
-    ()
 }
 
 fn handle_current_entity(
