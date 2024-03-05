@@ -87,19 +87,11 @@ fn main() {
         let current_item_data = items.get(&current_item);
 
         if current_item == ItemId::NoItem {
-            match current_room_data {
-                Some(data) => {
-                    handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
-                }
-                None => {}
+            if let Some(data) = current_room_data {
+                handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
             }
-        } else {
-            match current_item_data {
-                Some(data) => {
-                    handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
-                }
-                None => {}
-            }
+        } else if let Some(data) = current_item_data {
+            handle_current_entity(&data, &mut score, &mut current_room, &mut current_item)
         }
 
         if score > -10 && score < -7 {
