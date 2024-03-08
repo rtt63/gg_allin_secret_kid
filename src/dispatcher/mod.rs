@@ -1,8 +1,6 @@
 use crate::clear_console;
 use crate::ItemId;
 use crate::RoomId;
-use std::cell::Cell;
-use std::sync::atomic::{AtomicU8, Ordering};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ActionId {
@@ -57,32 +55,32 @@ pub enum ActionId {
 }
 
 struct GlobalState {
-    mics_broken: Cell<u8>,
-    the_cure_singing_attemps: Cell<u8>,
-    intercom_open_counter: Cell<u8>,
+    mics_broken: u8,
+    the_cure_singing_attemps: u8,
+    intercom_open_counter: u8,
 }
 
 impl GlobalState {
     pub fn break_mic(&self) {
-        let upd_value = &self.mics_broken.get() + 1;
-        self.mics_broken = Cell::new(upd_value);
+        let upd_value = &self.mics_broken + 1;
+        self.mics_broken = upd_value;
     }
 
     pub fn sing_the_cure(&self) {
-        let upd_value = &self.the_cure_singing_attemps.get() + 1;
-        self.the_cure_singing_attemps = Cell::new(upd_value);
+        let upd_value = &self.the_cure_singing_attemps + 1;
+        self.the_cure_singing_attemps = upd_value;
     }
 
     pub fn open_intercom(&self) {
-        let upd_value = &self.intercom_open_counter.get() + 1;
-        self.intercom_open_counter = Cell::new(upd_value);
+        let upd_value = &self.intercom_open_counter + 1;
+        self.intercom_open_counter = upd_value;
     }
 }
 
 const STATE: GlobalState = GlobalState {
-    mics_broken: Cell::new(0),
-    the_cure_singing_attemps: Cell::new(0),
-    intercom_open_counter: Cell::new(0),
+    mics_broken: 0,
+    the_cure_singing_attemps: 0,
+    intercom_open_counter: 0,
 };
 
 pub fn call_action(
@@ -195,7 +193,7 @@ pub fn call_action(
         }
         ActionId::SingToTheCureAndCry => {
             STATE.sing_the_cure();
-            let done_attemps = STATE.the_cure_singing_attemps.get();
+            let done_attemps = STATE.the_cure_singing_attemps;
             match done_attemps {
                 1 => {
                     println!("Your band members already want to get rid of you");
@@ -215,7 +213,7 @@ pub fn call_action(
             *score -= 2;
         }
         ActionId::PressRandomNumbersOnAnIntercom => {
-            let intercome_opened = STATE.intercom_open_counter.get();
+            let intercome_opened = STATE.intercom_open_counter;
             match intercome_opened {
                 0 => {
                     println!("Ha! There was a pizza delivery guy waiting! Nice one!");
@@ -245,7 +243,7 @@ pub fn call_action(
         }
         ActionId::ThrowMicAtTheWall => {
             STATE.break_mic();
-            let broken_mics = STATE.mics_broken.get();
+            let broken_mics = STATE.mics_broken;
             match broken_mics {
                 1 => {
                     println!("You broke it");
