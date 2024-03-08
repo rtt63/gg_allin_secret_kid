@@ -1,6 +1,7 @@
 use crate::clear_console;
 use crate::ItemId;
 use crate::RoomId;
+use std::cell::Cell;
 use std::sync::atomic::{AtomicU8, Ordering};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -55,33 +56,34 @@ pub enum ActionId {
     ExitGame,
 }
 
-static MICS_BROKEN: AtomicU8 = AtomicU8::new(0);
-fn break_mic() {
-    MICS_BROKEN.fetch_add(1, Ordering::SeqCst).wrapping_add(1);
-}
-fn get_broken_mics() -> u8 {
-    MICS_BROKEN.load(Ordering::SeqCst)
+struct GlobalState {
+    mics_broken: Cell<u8>,
+    the_cure_singing_attemps: Cell<u8>,
+    intercom_open_counter: Cell<u8>,
 }
 
-static THE_CURE_SINGING_ATTEMPS: AtomicU8 = AtomicU8::new(0);
-fn sing_the_cure() {
-    THE_CURE_SINGING_ATTEMPS
-        .fetch_add(1, Ordering::SeqCst)
-        .wrapping_add(1);
-}
-fn get_the_cure_singing_attemps() -> u8 {
-    THE_CURE_SINGING_ATTEMPS.load(Ordering::SeqCst)
+impl GlobalState {
+    pub fn break_mic(&self) {
+        let upd_value = &self.mics_broken.get() + 1;
+        self.mics_broken = Cell::new(upd_value);
+    }
+
+    pub fn sing_the_cure(&self) {
+        let upd_value = &self.the_cure_singing_attemps.get() + 1;
+        self.the_cure_singing_attemps = Cell::new(upd_value);
+    }
+
+    pub fn open_intercom(&self) {
+        let upd_value = &self.intercom_open_counter.get() + 1;
+        self.intercom_open_counter = Cell::new(upd_value);
+    }
 }
 
-static INTERCOM_OPEN_COUNTER: AtomicU8 = AtomicU8::new(0);
-fn open_intercome() {
-    INTERCOM_OPEN_COUNTER
-        .fetch_add(1, Ordering::SeqCst)
-        .wrapping_add(1);
-}
-fn get_intercome_opened() -> u8 {
-    INTERCOM_OPEN_COUNTER.load(Ordering::SeqCst)
-}
+const STATE: GlobalState = GlobalState {
+    mics_broken: Cell::new(0),
+    the_cure_singing_attemps: Cell::new(0),
+    intercom_open_counter: Cell::new(0),
+};
 
 pub fn call_action(
     action_id: &ActionId,
@@ -192,8 +194,8 @@ pub fn call_action(
             *score += 1;
         }
         ActionId::SingToTheCureAndCry => {
-            sing_the_cure();
-            let done_attemps = get_the_cure_singing_attemps();
+            STATE.sing_the_cure();
+            let done_attemps = STATE.the_cure_singing_attemps.get();
             match done_attemps {
                 1 => {
                     println!("Your band members already want to get rid of you");
@@ -213,12 +215,12 @@ pub fn call_action(
             *score -= 2;
         }
         ActionId::PressRandomNumbersOnAnIntercom => {
-            let intercome_opened = get_intercome_opened();
+            let intercome_opened = STATE.intercom_open_counter.get();
             match intercome_opened {
                 0 => {
                     println!("Ha! There was a pizza delivery guy waiting! Nice one!");
                     *score += 2;
-                    open_intercome();
+                    STATE.open_intercom();
                 }
                 _ => {
                     println!("Nobody there");
@@ -242,8 +244,8 @@ pub fn call_action(
             *score += 1;
         }
         ActionId::ThrowMicAtTheWall => {
-            break_mic();
-            let broken_mics = get_broken_mics();
+            STATE.break_mic();
+            let broken_mics = STATE.mics_broken.get();
             match broken_mics {
                 1 => {
                     println!("You broke it");
